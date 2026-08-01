@@ -1,3 +1,4 @@
+[![Download](https://img.shields.io/badge/Download-SecureVault-blue?style=for-the-badge)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/releases/latest)
 # Secure Vault
 
 <p align="center">
