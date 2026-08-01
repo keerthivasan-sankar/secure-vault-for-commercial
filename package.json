@@ -1,0 +1,9 @@
+{
+  "name": "secure-vault",
+  "version": "3.2.0",
+  "description": "Military-grade file encryption with USB key authentication",
+  "main": "src/encrypt.js",
+  "dependencies": {
+    "nodemailer": "^6.9.0"
+  }
+}

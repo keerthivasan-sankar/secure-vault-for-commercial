@@ -1,0 +1,53 @@
+name: Build Installer
+
+# Runs on every push to main (for testing) and on version tags (for releases).
+# You don't need a Windows machine yourself - GitHub provides one for free.
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify JavaScript syntax
+        run: |
+          Get-ChildItem -Recurse -Filter *.js -Exclude node_modules | ForEach-Object {
+            node --check $_.FullName
+            if ($LASTEXITCODE -ne 0) { throw "Syntax error in $($_.FullName)" }
+          }
+        shell: pwsh
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+        shell: pwsh
+
+      - name: Build installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+        shell: pwsh
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SecureVaultSetup
+          path: dist/*.exe
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
