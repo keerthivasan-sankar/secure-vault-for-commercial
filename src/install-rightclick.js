@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
 const SECURE_VAULT_PATH = path.join(__dirname, '..');
 const REG_PATH = path.join(__dirname, '..', 'install-rightclick.reg');
@@ -36,7 +36,7 @@ const regContent = `Windows Registry Editor Version 5.00
 fs.writeFileSync(REG_PATH, regContent);
 console.log('? Registry file created');
 
-execSync(`regedit /s "${REG_PATH}"`, { stdio: 'ignore' });
+execFileSync('regedit', ['/s', REG_PATH], { stdio: 'ignore' });
 console.log('? Right-click menu installed!');
 
 fs.unlinkSync(REG_PATH);

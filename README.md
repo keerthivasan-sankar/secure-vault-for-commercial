@@ -1,4 +1,3 @@
-[![Download](https://img.shields.io/badge/Download-SecureVault-blue?style=for-the-badge)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/releases/latest)
 # Secure Vault
 
 <p align="center">
@@ -7,6 +6,10 @@
 
 <p align="center">
   <b>Local-first file encryption for Windows, secured by a physical USB key instead of a password.</b>
+</p>
+
+<p align="center">
+  ⚠️ <b>v3.3.0 includes a breaking security fix</b> — see <a href="CHANGELOG.md">CHANGELOG.md</a> before updating from an earlier version.
 </p>
 
 ---
@@ -214,11 +217,15 @@ The workflow in `.github/workflows/build.yml` builds the installer on a Windows 
 
 ## Security notes
 
-- The encryption key exists in plaintext only on your registered USB drive and briefly in memory during an encrypt/decrypt operation — it is never transmitted anywhere.
+- **The USB key is never stored in plaintext.** As of v3.3.0, the 32-byte key on your USB drive is itself encrypted (AES-256-GCM) with a key derived from your password via scrypt. Someone with brief physical access to the USB drive alone cannot extract a usable key without also knowing the password — this replaces the earlier design, which stored the raw key in plaintext on the drive.
 - Uses Node's built-in `crypto` module: AES-256-GCM with scrypt key derivation, random salts and IVs per operation, and authentication tags to detect tampering.
-- **This project has not undergone an independent third-party security audit.** It's built on standard, well-reviewed cryptographic primitives, but the implementation itself has only been reviewed informally. Use it for what you'd be comfortable losing, not as your only line of defense for anything irreplaceable.
+- File integrity is checked with a **keyed HMAC-SHA256** (using the same unlocked key), verified before decryption is attempted. Earlier versions used an unkeyed SHA-256 checksum, which anyone could forge — it added no real tamper protection. The current HMAC does.
+- 7-Zip is invoked via `execFileSync` with arguments passed as an array, not a shell string — this closes a command-injection risk present in earlier versions, where a maliciously crafted file/folder name could have broken out of shell quoting.
+- Passwords are captured into a `Buffer` (not a JS string) and explicitly zeroed (`.fill(0)`) as soon as each use is finished, reducing the time key material spends resident in memory. This is a real improvement but not an absolute guarantee — Node.js/V8 may retain other copies internally (e.g. during garbage collection, or if memory was paged to disk by the OS) that application code cannot reach or control.
+- **This project has not undergone an independent third-party security audit.** It's built on standard, well-reviewed cryptographic primitives, and several issues raised by community review have been fixed (see [CHANGELOG.md](CHANGELOG.md)), but the implementation has only been reviewed informally overall. Use it for what you'd be comfortable losing, not as your only line of defense for anything irreplaceable.
 - Secure delete overwrites the original file 3 times before removing it — note that on SSDs, wear-leveling means overwrite-based deletion doesn't guarantee the original data is unrecoverable at the hardware level.
 - The installer is currently unsigned, which is why Windows shows a SmartScreen warning on first run. Unsigned doesn't mean unsafe — it means Windows hasn't yet built reputation for this specific publisher/file. You can verify the source code yourself in this repository before trusting the compiled `.exe`.
+- **There is no password recovery, by design.** Your password is never stored anywhere. If you forget it, files encrypted with it are permanently unrecoverable, even with the correct USB drive in hand.
 
 ---
 

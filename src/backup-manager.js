@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { wipe } = require('./crypto');
 
 class BackupManager {
     constructor() {
@@ -10,7 +11,7 @@ class BackupManager {
         this.encryptBackups = true;
     }
 
-    createBackup(filePath, password = null, usbKey = null) {
+    createBackup(filePath, rawKey = null) {
         try {
             if (!fs.existsSync(this.backupDir)) {
                 fs.mkdirSync(this.backupDir, { recursive: true });
@@ -24,36 +25,41 @@ class BackupManager {
             const plaintext = fs.readFileSync(filePath);
             let backupData = plaintext;
 
-            if (this.encryptBackups && password && usbKey) {
+            if (this.encryptBackups && rawKey) {
                 const salt = crypto.randomBytes(16);
                 const backupKey = crypto.scryptSync(
-                    Buffer.concat([Buffer.from(password, 'utf8'), usbKey, Buffer.from('BACKUP')]),
+                    Buffer.concat([rawKey, Buffer.from('BACKUP')]),
                     salt,
                     32
                 );
                 const iv = crypto.randomBytes(12);
-                const cipher = crypto.createCipheriv('aes-256-gcm', backupKey, iv);
-                const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-                const authTag = cipher.getAuthTag();
+                let ciphertext, authTag;
+                try {
+                    const cipher = crypto.createCipheriv('aes-256-gcm', backupKey, iv);
+                    ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+                    authTag = cipher.getAuthTag();
+                } finally {
+                    wipe(backupKey);
+                }
                 backupData = Buffer.concat([salt, iv, authTag, ciphertext]);
             }
 
             fs.writeFileSync(backupPath, backupData);
             this.logBackup(filePath, backupPath);
-            console.log(`? Backup created: ${backupName}${this.encryptBackups ? ' (encrypted)' : ''}`);
+            console.log(`Backup created: ${backupName}${this.encryptBackups ? ' (encrypted)' : ''}`);
             return backupPath;
         } catch (error) {
-            console.error('? Backup failed:', error.message);
+            console.error('Backup failed:', error.message);
             return null;
         }
     }
 
-    restoreBackup(filePath, password = null, usbKey = null) {
+    restoreBackup(filePath, rawKey = null) {
         try {
             const fileName = path.basename(filePath);
             const backups = this.getBackups(filePath);
             if (backups.length === 0) {
-                console.log('? No backups found for:', fileName);
+                console.log('No backups found for:', fileName);
                 return null;
             }
 
@@ -62,7 +68,7 @@ class BackupManager {
             const backupData = fs.readFileSync(backupPath);
             let plaintext = backupData;
 
-            if (this.encryptBackups && password && usbKey) {
+            if (this.encryptBackups && rawKey) {
                 try {
                     const salt = backupData.subarray(0, 16);
                     const iv = backupData.subarray(16, 28);
@@ -70,25 +76,28 @@ class BackupManager {
                     const ciphertext = backupData.subarray(44);
 
                     const backupKey = crypto.scryptSync(
-                        Buffer.concat([Buffer.from(password, 'utf8'), usbKey, Buffer.from('BACKUP')]),
+                        Buffer.concat([rawKey, Buffer.from('BACKUP')]),
                         salt,
                         32
                     );
-
-                    const decipher = crypto.createDecipheriv('aes-256-gcm', backupKey, iv);
-                    decipher.setAuthTag(authTag);
-                    plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+                    try {
+                        const decipher = crypto.createDecipheriv('aes-256-gcm', backupKey, iv);
+                        decipher.setAuthTag(authTag);
+                        plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+                    } finally {
+                        wipe(backupKey);
+                    }
                 } catch (e) {
-                    console.log('?? Backup decryption failed. Trying as plaintext...');
+                    console.log('Backup decryption failed. Trying as plaintext...');
                     plaintext = backupData;
                 }
             }
 
             fs.writeFileSync(filePath, plaintext);
-            console.log(`? Restored from: ${latest}`);
+            console.log(`Restored from: ${latest}`);
             return filePath;
         } catch (error) {
-            console.error('? Restore failed:', error.message);
+            console.error('Restore failed:', error.message);
             return null;
         }
     }
@@ -119,19 +128,19 @@ class BackupManager {
                 for (let i = this.maxBackups; i < backups.length; i++) {
                     const backupPath = path.join(this.backupDir, backups[i]);
                     fs.unlinkSync(backupPath);
-                    console.log(`??? Removed old backup: ${backups[i]}`);
+                    console.log(`Removed old backup: ${backups[i]}`);
                 }
                 for (const backup of backups) {
                     const backupPath = path.join(this.backupDir, backup);
                     const stats = fs.statSync(backupPath);
                     if (now - stats.mtimeMs > maxAgeMs) {
                         fs.unlinkSync(backupPath);
-                        console.log(`??? Removed expired backup: ${backup}`);
+                        console.log(`Removed expired backup: ${backup}`);
                     }
                 }
             }
         } catch (error) {
-            console.error('?? Cleanup error:', error.message);
+            console.error('Cleanup error:', error.message);
         }
     }
 

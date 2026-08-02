@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const { registerMaster, registerDevice } = require('./auth');
+const { askSecret } = require('./password-input');
+const { wipe } = require('./crypto');
 
 const args = process.argv.slice(2);
 const kind = args[0];
@@ -30,5 +32,49 @@ if (!fs.existsSync(normalizedDrive)) {
     process.exit(1);
 }
 
-if (kind === 'master') registerMaster(normalizedDrive);
-else registerDevice(normalizedDrive);
+async function main() {
+    // Password is always prompted interactively here, never taken as a
+    // command-line argument - CLI args can end up in shell history and are
+    // visible to other processes on the system while this one is running.
+    console.log('\nA password is required to protect this key.');
+    console.log('IMPORTANT: There is no password recovery. If you forget this');
+    console.log('password, files encrypted with this key are permanently');
+    console.log('unrecoverable - even with this exact USB drive in hand.');
+    console.log('Choose a password you will remember or store safely (e.g. in a');
+    console.log('password manager), and enter it here (8+ chars):');
+    const passwordBuf = await askSecret('');
+    if (!passwordBuf || passwordBuf.length < 8) {
+        wipe(passwordBuf);
+        console.error('Password must be at least 8 characters');
+        process.exit(1);
+    }
+
+    console.log('Confirm password:');
+    const confirmBuf = await askSecret('');
+    const crypto = require('crypto');
+    const matches = passwordBuf.length === confirmBuf.length &&
+        crypto.timingSafeEqual(passwordBuf, confirmBuf);
+    wipe(confirmBuf);
+    if (!matches) {
+        wipe(passwordBuf);
+        console.error('Passwords do not match');
+        process.exit(1);
+    }
+
+    try {
+        const rawKey = kind === 'master'
+            ? registerMaster(normalizedDrive, passwordBuf)
+            : registerDevice(normalizedDrive, passwordBuf);
+        wipe(rawKey);
+    } catch (e) {
+        console.error(e.message);
+        process.exit(1);
+    } finally {
+        wipe(passwordBuf);
+    }
+}
+
+main().catch((e) => {
+    console.error(e.message);
+    process.exit(1);
+});

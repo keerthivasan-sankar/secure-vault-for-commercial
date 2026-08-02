@@ -24,9 +24,9 @@ function getSevenZipPath() {
     }
     
     try {
-        const { execSync } = require('child_process');
-        const cmd = platform === 'win32' ? 'where 7z' : 'which 7z';
-        const result = execSync(cmd, { encoding: 'utf8' }).trim();
+        const { execFileSync } = require('child_process');
+        const [cmd, cmdArgs] = platform === 'win32' ? ['where', ['7z']] : ['which', ['7z']];
+        const result = execFileSync(cmd, cmdArgs, { encoding: 'utf8' }).trim();
         if (result) return result;
     } catch (e) {}
     
