@@ -4,7 +4,7 @@
 
 **Local-first file encryption for Windows, secured by a physical USB key instead of a password.**
 
-![CodeQL](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/runs/31198216790%20how%20to%20change%20this%20as%20link)]
+[CodeQL](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/runs/31198216790%20how%20to%20change%20this%20as%20link)
 ![Build Installer](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/build.yml/badge.svg)
 ![License: MIT](https://img.shields.io/github/license/keerthivasan-sankar/secure-vault-for-commercial)
 
