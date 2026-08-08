@@ -4,9 +4,9 @@
 
 **Local-first file encryption for Windows, secured by a physical USB key instead of a password.**
 
-[CodeQL](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/runs/31198216790%20how%20to%20change%20this%20as%20link)
-![Build Installer](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/build.yml/badge.svg)
-![License: MIT](https://img.shields.io/github/license/keerthivasan-sankar/secure-vault-for-commercial)
+[![CodeQL](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/codeql.yml/badge.svg)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/codeql.yml)
+[![Build Installer](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/build.yml/badge.svg)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/github/license/keerthivasan-sankar/secure-vault-for-commercial)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/blob/main/LICENSE)
 
 ⚠️ **v3.3.0 includes a breaking security fix** — see [CHANGELOG.md](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/blob/main/CHANGELOG.md) before updating from an earlier version.
 
