@@ -101,31 +101,22 @@ function recordDevice(drive, kind) {
     saveRegistry(registry);
 }
 
-function findKeyFiles(filename) {
-    const found = [];
+function findKeyFile(filename) {
     for (let i = 67; i <= 90; i++) {
         const drive = String.fromCharCode(i) + ':' + path.sep;
         if (!fs.existsSync(drive)) continue;
         const candidate = path.join(drive, filename);
-        if (fs.existsSync(candidate)) found.push({ drive, path: candidate });
+        if (fs.existsSync(candidate)) return candidate;
     }
-    return found;
+    return null;
 }
 
 function loadMasterKey(password) {
-    const found = findKeyFiles(MASTER_KEY_FILENAME);
-    if (found.length === 0) {
+    const keyPath = findKeyFile(MASTER_KEY_FILENAME);
+    if (!keyPath) {
         throw new Error('Master USB key not found. Insert your registered master USB drive.');
     }
-    if (found.length > 1) {
-        const drives = found.map(f => f.drive).join(', ');
-        throw new Error(
-            `Found a master key file on more than one drive: ${drives}\n` +
-            `Unplug all but the one you intend to use and try again - ` +
-            `picking one automatically could use the wrong key by mistake.`
-        );
-    }
-    const blob = fs.readFileSync(found[0].path);
+    const blob = fs.readFileSync(keyPath);
     return unwrapKey(blob, password);
 }
 
