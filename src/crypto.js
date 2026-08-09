@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const crypto = require('crypto');
 
-const SCRYPT_N = 2 ** 15;
+const SCRYPT_N = 2 ** 16;
 const SCRYPT_R = 8;
 const SCRYPT_P = 1;
 const KEY_LEN = 32;
@@ -120,6 +120,11 @@ function encryptWithPerFileKey(plaintext, masterKey) {
 }
 
 function decryptWithPerFileKey(data, masterKey) {
+    const MIN_HEADER_LEN = 16 + 12 + 16 + 32 + 12 + 16; // salt+iv+tag+enc_key+file_iv+file_tag
+    if (data.length < MIN_HEADER_LEN) {
+        throw new Error('File is too short to be a valid vault file - it may be truncated or corrupted.');
+    }
+
     let offset = 0;
 
     const salt = data.subarray(offset, offset + 16); offset += 16;
