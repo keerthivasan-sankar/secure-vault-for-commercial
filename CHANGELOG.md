@@ -1,5 +1,34 @@
 # Changelog
 
+## v3.4.0 — Hardening pass (breaking change)
+
+Following a focused security review of `crypto.js` and `auth.js`.
+
+### Changed
+
+1. **Scrypt cost parameter doubled** (`N`: 2^15 → 2^16, 32MB → 64MB memory cost). This raises the bar against offline brute-force of a stolen `.vault_master.key` or `.vault_device.key` file, particularly given the password minimum is only 8 characters with no complexity requirement. Chosen based on actual timing tests to stay under ~450ms total per operation — strong enough to matter, not slow enough to tempt anyone toward weaker passwords out of impatience.
+2. **Explicit length validation added** to `decryptWithPerFileKey()` in `crypto.js`. Previously, a truncated or corrupted `.vault` file could produce a low-level, unfriendly error from Node's crypto bindings instead of a clean, expected message. This is defense-in-depth — the error was already caught and shown cleanly by `decrypt.js`'s existing try/catch, but the function now validates its own input correctly regardless of caller.
+
+### Breaking change — you must re-register your USB key(s) again
+
+Scrypt parameters aren't stored in the key file itself, so a key wrapped under the old cost (v3.3.0/v3.3.1) cannot be unwrapped correctly under this version's higher cost — the derived wrapping key will differ.
+
+**Before updating, same process as the v3.3.0 migration:**
+1. Decrypt any `.vault` files you need using the previous version.
+2. Update to this version.
+3. Re-register your USB drive(s) (menu option 3 / `register.js`).
+4. Re-encrypt anything you decrypted in step 1.
+
+This is the second breaking change to the key format in quick succession — genuinely sorry for the churn if you're actively using this. The parameter chosen here is meant to hold for the foreseeable future rather than need another bump soon.
+
+---
+
+## v3.3.1
+
+Dependency fix: `nodemailer` pinned to exact version `9.0.5`, resolving 8 Dependabot security alerts (SMTP injection, CRLF injection, SSRF, DoS, TLS validation bypass, and related issues in older nodemailer versions).
+
+---
+
 ## v3.3.0 — Security fixes (breaking change)
 
 Thanks to detailed community code review, four real issues were found and fixed. **This is a breaking change** — see the migration note below before updating.
