@@ -21,7 +21,7 @@ const SALT_LEN = 16;
 const IV_LEN = 12;
 const TAG_LEN = 16;
 const RAW_KEY_LEN = 32;
-const SCRYPT_N = 2 ** 15;
+const SCRYPT_N = 2 ** 16;
 const SCRYPT_R = 8;
 const SCRYPT_P = 1;
 
