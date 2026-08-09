@@ -3,7 +3,7 @@
 ; Produces: dist/SecureVaultSetup-<version>.exe
 
 #define MyAppName "Secure Vault"
-#define MyAppVersion "3.2.0"
+#define MyAppVersion "3.4.0"
 #define MyAppPublisher "Your Name"
 #define MyAppURL "https://github.com/yourname/secure-vault"
 #define MyAppExeName "secure-vault.bat"
