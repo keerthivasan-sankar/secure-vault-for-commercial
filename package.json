@@ -1,9 +1,9 @@
 {
   "name": "secure-vault",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "AES-256-GCM file encryption with USB key authentication",
   "main": "src/encrypt.js",
   "dependencies": {
-    "nodemailer": "^9.0.5"
+    "nodemailer": "9.0.5"
   }
 }
