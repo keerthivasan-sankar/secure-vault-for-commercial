@@ -1,6 +1,6 @@
 {
   "name": "secure-vault",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "AES-256-GCM file encryption with USB key authentication",
   "main": "src/encrypt.js",
   "dependencies": {
