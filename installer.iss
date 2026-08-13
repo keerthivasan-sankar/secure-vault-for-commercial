@@ -4,8 +4,8 @@
 
 #define MyAppName "Secure Vault"
 #define MyAppVersion "3.5.0"
-#define MyAppPublisher "Your Name"
-#define MyAppURL "https://github.com/yourname/secure-vault"
+#define MyAppPublisher "Keerthivasan S"
+#define MyAppURL "https://github.com/keerthivasan-sankar/secure-vault-for-commercial"
 #define MyAppExeName "secure-vault.bat"
 
 [Setup]
