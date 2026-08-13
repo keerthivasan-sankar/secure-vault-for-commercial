@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const crypto = require('crypto');
-const { encryptWithPerFileKey, KEY_KIND, wipe } = require('./crypto');
+const { encryptWithPerFileKey, KEY_KIND, wipe, deriveAuthSubkey } = require('./crypto');
 const { loadMasterKey, loadDeviceKey } = require('./auth');
 const { getDriveLetter, isLocalDrive, getSevenZipPath } = require('./platform');
 const logger = require('./logger');
@@ -203,10 +203,13 @@ async function main() {
 
         console.log('Encrypting with per-file key...');
         const encrypted = encryptWithPerFileKey(plainBuffer, rawKey);
+        wipe(plainBuffer);
         fs.writeFileSync(outPath, encrypted);
 
         console.log('Generating integrity HMAC...');
-        const mac = await generateHmac(outPath, rawKey);
+        const authSubkey = deriveAuthSubkey(rawKey);
+        const mac = await generateHmac(outPath, authSubkey);
+        wipe(authSubkey);
         saveHmac(outPath, mac);
         console.log(`Integrity HMAC: ${mac}`);
 
