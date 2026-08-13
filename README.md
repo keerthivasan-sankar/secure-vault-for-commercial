@@ -1,14 +1,16 @@
 # Secure Vault
 
-![Secure Vault logo](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/raw/main/assets/logo.png)
+<p align="center">
+  <img src="assets/logo.png" alt="Secure Vault logo" width="280">
+</p>
 
-**Local-first file encryption for Windows, secured by a physical USB key instead of a password.**
+<p align="center">
+  <b>Local-first file encryption for Windows, secured by a physical USB key instead of a password.</b>
+</p>
 
-[![CodeQL](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/github-code-scanning/codeql)
-[![Build Installer](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/build.yml/badge.svg)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/actions/workflows/build.yml)
-[![License: MIT](https://img.shields.io/github/license/keerthivasan-sankar/secure-vault-for-commercial)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/blob/main/LICENSE)
-
-⚠️ **v3.3.0 includes a breaking security fix** — see [CHANGELOG.md](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/blob/main/CHANGELOG.md) before updating from an earlier version.
+<p align="center">
+  ⚠️ <b>v3.5.0 includes a breaking security fix</b> — see <a href="CHANGELOG.md">CHANGELOG.md</a> before updating from an earlier version.
+</p>
 
 ---
 
@@ -17,18 +19,17 @@
 - [What this is](#what-this-is)
 - [Why a USB key instead of a password](#why-a-usb-key-instead-of-a-password)
 - [Features](#features)
-- [Quick Install](#quick-install)
 - [Installation](#installation)
 - [First-time setup](#first-time-setup)
 - [Using Secure Vault](#using-secure-vault)
-  * [Encrypting a file](#1-encrypt-a-file)
-  * [Decrypting a file](#2-decrypt-a-file)
-  * [Registering a USB key](#3-register-usb-key)
-  * [Viewing registered devices](#4-view-registered-devices)
-  * [Backups](#5-backups)
-  * [Restoring a file](#6-restore)
-  * [Email alerts (Option 7)](#7-email-alerts)
-  * [Right-click integration](#8-right-click-integration)
+  - [Encrypting a file](#1-encrypt-a-file)
+  - [Decrypting a file](#2-decrypt-a-file)
+  - [Registering a USB key](#3-register-usb-key)
+  - [Viewing registered devices](#4-view-registered-devices)
+  - [Backups](#5-backups)
+  - [Restoring a file](#6-restore)
+  - [Email alerts (Option 7)](#7-email-alerts)
+  - [Right-click integration](#8-right-click-integration)
 - [Command-line usage](#command-line-usage)
 - [Configuration files](#configuration-files)
 - [Building the installer from source](#building-the-installer-from-source)
@@ -60,23 +61,12 @@ Passwords can be guessed, phished, keylogged, or brute-forced. A physical key ca
 - Optional email alerts when vault actions happen
 - Optional right-click "Encrypt/Decrypt with Secure Vault" entry in Windows Explorer
 - Fully unattended installer — no interaction required beyond the initial double-click
-- Continuously scanned with GitHub CodeQL and Dependabot (see [Security notes](#security-notes))
-
----
-
-## Quick Install
-
-[![Download Latest Release](https://img.shields.io/github/v/release/keerthivasan-sankar/secure-vault-for-commercial?label=Download%20Installer&style=for-the-badge)](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/releases/latest)
-
-Click the button above to jump straight to the latest release. Download the `.exe` asset, run it, and click **"More info" → "Run anyway"** if Windows SmartScreen appears (expected for an unsigned installer — see [Security notes](#security-notes)).
-
-No account, no sign-up, no internet connection required after download.
 
 ---
 
 ## Installation
 
-1. Go to the [Releases page](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/releases) and download the latest `SecureVaultSetup-x.x.x.exe`.
+1. Go to the [Releases page](../../releases) and download the latest `SecureVaultSetup-x.x.x.exe`.
 2. Run it.
    - **Windows may show a "Windows protected your PC" SmartScreen warning.** This is expected for a new, unsigned installer — click **"More info" → "Run anyway"**. See [Security notes](#security-notes) for why this happens.
    - The installer requires administrator rights (it may install Node.js if it's missing, and can register a right-click shell extension).
@@ -127,31 +117,24 @@ Launch the app via the Start Menu / Desktop shortcut to get the interactive menu
 ```
 
 ### 1. Encrypt a file
-
 Choose option 1, then enter the full path to the file or folder. Your registered USB drive must be plugged in. The output is a `.vault` file; the original is securely deleted (overwritten 3 times) after a successful encryption and backup.
 
 ### 2. Decrypt a file
-
 Choose option 2, enter the path to the `.vault` file. Your registered USB drive must be plugged in — decryption is impossible without it.
 
 ### 3. Register USB key
-
 Covered in [First-time setup](#first-time-setup) above. You can also register **additional per-device keys** (choose `device` instead of `master`) if you want a separate key for a second machine while keeping one master key overall.
 
 ### 4. View registered devices
-
 Lists every USB key (master and device) currently registered, pulled from `config/registered-devices.json`.
 
 ### 5. Backups
-
 Every time you encrypt a file, Secure Vault automatically saves an encrypted backup copy locally (rotated — keeps the 5 most recent, auto-expires after 30 days). Option 5 lets you list and view these.
 
 ### 6. Restore
-
 Restores a file from one of those local backups, in case you need the pre-encryption version back without going through decrypt.
 
 ### 7. Email alerts
-
 Optional. Sends you an email whenever a vault action happens (encrypt/decrypt), including which file, which computer, and when.
 
 **Setup requires a Gmail App Password — not your normal Gmail password.** Steps:
@@ -166,14 +149,12 @@ Optional. Sends you an email whenever a vault action happens (encrypt/decrypt), 
    - `Alert recipient email` → where you want alerts sent (can be the same address)
 
 Notes:
-
 - This feature is Gmail-only as currently built (hardcoded to `smtp.gmail.com`).
 - The App Password is stored in plaintext in `config/settings.json` on your machine — don't share that file, and don't commit it with real credentials to a public repository.
 - If sending fails (bad password, no internet), it logs an error and continues — it will never block or break an encrypt/decrypt operation.
 - Fully optional — answering `n` skips it, and everything else works identically.
 
 ### 8. Right-click integration
-
 Adds "Encrypt with Secure Vault" / "Decrypt with Secure Vault" to the Windows Explorer right-click menu, so you can encrypt/decrypt without opening the app menu first.
 
 ---
@@ -204,10 +185,10 @@ Run this from the install folder (e.g. `C:\Program Files\SecureVault`).
 
 ## Configuration files
 
-| File                             | Purpose                                                    |
-| --------------------------------- | ----------------------------------------------------------- |
-| `config/settings.json`           | Email alert settings (address, App Password, enabled flag) |
-| `config/registered-devices.json` | List of registered USB devices                             |
+| File | Purpose |
+|---|---|
+| `config/settings.json` | Email alert settings (address, App Password, enabled flag) |
+| `config/registered-devices.json` | List of registered USB devices |
 
 These are created with safe placeholder values on install and update automatically as you use the app — no manual editing required.
 
@@ -226,7 +207,7 @@ Output: `dist/SecureVaultSetup-<version>.exe`
 **Or let GitHub Actions build it for you** (no Windows machine needed) — push a version tag:
 
 ```
-git tag v3.2.0
+git tag v3.5.0
 git push origin v3.2.0
 ```
 
@@ -237,16 +218,15 @@ The workflow in `.github/workflows/build.yml` builds the installer on a Windows 
 ## Security notes
 
 - **The USB key is never stored in plaintext.** As of v3.3.0, the 32-byte key on your USB drive is itself encrypted (AES-256-GCM) with a key derived from your password via scrypt. Someone with brief physical access to the USB drive alone cannot extract a usable key without also knowing the password — this replaces the earlier design, which stored the raw key in plaintext on the drive.
+- **This is removable-key possession, not hardware-bound custody.** The key file on the USB drive is an ordinary, copyable file — not a secret stored inside tamper-resistant hardware like a smart card, TPM, or a device such as a YubiKey, which never lets raw key material leave the device at all. Someone with brief physical access to your drive (or malware running on your machine while it's mounted) can copy that file; it just isn't useful to them without your password too. If you need true hardware-bound custody, a dedicated hardware security token is a stronger choice than a commodity USB drive.
 - Uses Node's built-in `crypto` module: AES-256-GCM with scrypt key derivation, random salts and IVs per operation, and authentication tags to detect tampering.
 - File integrity is checked with a **keyed HMAC-SHA256** (using the same unlocked key), verified before decryption is attempted. Earlier versions used an unkeyed SHA-256 checksum, which anyone could forge — it added no real tamper protection. The current HMAC does.
 - 7-Zip is invoked via `execFileSync` with arguments passed as an array, not a shell string — this closes a command-injection risk present in earlier versions, where a maliciously crafted file/folder name could have broken out of shell quoting.
 - Passwords are captured into a `Buffer` (not a JS string) and explicitly zeroed (`.fill(0)`) as soon as each use is finished, reducing the time key material spends resident in memory. This is a real improvement but not an absolute guarantee — Node.js/V8 may retain other copies internally (e.g. during garbage collection, or if memory was paged to disk by the OS) that application code cannot reach or control.
-- **This project has not undergone an independent third-party security audit.** However, it is continuously scanned via **GitHub CodeQL** (JavaScript/TypeScript and Actions workflows) on every push, with zero alerts currently outstanding, and dependencies are monitored via **Dependabot**. This is automated static analysis, not a manual audit — treat it as a meaningfully raised floor, not a certification. It's built on standard, well-reviewed cryptographic primitives, and several issues raised by community review have been fixed (see [CHANGELOG.md](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/blob/main/CHANGELOG.md)).
+- **This project has not undergone an independent third-party security audit.** It's built on standard, well-reviewed cryptographic primitives, and several issues raised by community review have been fixed (see [CHANGELOG.md](CHANGELOG.md)), but the implementation has only been reviewed informally overall. Use it for what you'd be comfortable losing, not as your only line of defense for anything irreplaceable.
 - Secure delete overwrites the original file 3 times before removing it — note that on SSDs, wear-leveling means overwrite-based deletion doesn't guarantee the original data is unrecoverable at the hardware level.
 - The installer is currently unsigned, which is why Windows shows a SmartScreen warning on first run. Unsigned doesn't mean unsafe — it means Windows hasn't yet built reputation for this specific publisher/file. You can verify the source code yourself in this repository before trusting the compiled `.exe`.
 - **There is no password recovery, by design.** Your password is never stored anywhere. If you forget it, files encrypted with it are permanently unrecoverable, even with the correct USB drive in hand.
-
-**Found a security issue?** Please report it privately rather than opening a public issue — see [SECURITY.md](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/blob/main/SECURITY.md) for how to disclose responsibly.
 
 ---
 
@@ -259,7 +239,6 @@ Any of `E`, `e`, `E:`, or `E:\` work — Secure Vault normalizes it automaticall
 This was a bug in older versions where a drive letter typed without a colon (e.g. just `e`) was misread as a relative folder name instead of a real drive. Fixed as of this version — update to the latest release if you still see this.
 
 **Email alerts aren't sending**
-
 - Confirm 2-Step Verification is on for the Gmail account.
 - Confirm you used an **App Password**, not your regular Gmail password.
 - Check your internet connection.
@@ -275,4 +254,4 @@ Check for a Windows UAC ("Do you want to allow this app to make changes?") promp
 
 ## License
 
-MIT — see [LICENSE](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/blob/main/LICENSE).
+MIT — see [LICENSE](LICENSE).
