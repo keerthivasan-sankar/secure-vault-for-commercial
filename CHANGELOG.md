@@ -1,5 +1,32 @@
 # Changelog
 
+## v3.5.0 — Cryptographic hygiene fixes (breaking change)
+
+Following an external technical review focused on AEAD construction correctness and lifecycle security (nonce/AAD/subkey practices, crash recovery, zeroization).
+
+### Changed
+
+1. **AAD (Additional Authenticated Data) binding added to every AES-GCM operation.** Previously, format/version/purpose context (e.g. which layer of the per-file-key scheme a given ciphertext belongs to) was not cryptographically bound to the GCM authentication tag. This meant header fields, while present, weren't authenticated alongside the ciphertext, and a ciphertext/tag pair from one context couldn't be distinguished from another purely by the tag. Fixed by binding a fixed, purpose-specific context string as AAD to each GCM operation (key-wrap layer, file-content layer, and the legacy container format's header bytes).
+2. **Domain-separated subkeys.** The root key was previously used directly for two different purposes (deriving an encryption-wrapping key, and as a raw HMAC key), with no separation between them. Now, purpose-bound subkeys are derived via HKDF (`deriveSubkey()` / `deriveAuthSubkey()` in `crypto.js`) before use, so the same root secret is never applied directly to two different cryptographic constructions.
+3. **Plaintext content is now explicitly zeroed after use.** Previously, only *key* material was wiped from memory after use; the actual decrypted/plaintext file content held in memory during encrypt and decrypt operations was not. Both `encrypt.js` and `decrypt.js` now wipe the plaintext buffer immediately after it's written to disk.
+
+### Documented, not yet fixed (tracked for future work)
+
+- **USB key custody is removable-key possession, not hardware binding.** The key file on the USB drive is an ordinary, copyable file; anyone with momentary physical access to the drive (or malware running while it's mounted) can copy it. Since v3.3.0 it's password-wrapped, so copying it alone is insufficient — but this is meaningfully different from a hardware security module or smart card, which never lets raw key material leave the device at all. This limitation is now stated explicitly rather than implied.
+- **No published migration tooling for old vault formats.** The current process for a breaking change is still "decrypt with the old version, update, re-register, re-encrypt" rather than an automated migration path.
+- **Crash recovery has not been tested under actual crash conditions.** The write-before-delete ordering (original file is only removed after the encrypted output is fully written) is sound by design, but has not been validated by deliberately killing the process mid-operation.
+
+### Breaking change — existing vault files must be re-encrypted
+
+The AAD context is now required to decrypt any file encrypted with this version or later; files encrypted under v3.3.0/v3.3.1/v3.4.0 do not have this binding and are not decryptable by this version's `decryptWithPerFileKey`. Same migration process as prior breaking changes:
+1. Decrypt any `.vault` files you need using the previous version.
+2. Update to this version.
+3. Re-encrypt.
+
+Note: this change does **not** require re-registering your USB key — the key custody format itself (from v3.4.0) is unchanged. Only the file encryption format changed.
+
+---
+
 ## v3.4.0 — Hardening pass (breaking change)
 
 Following a focused security review of `crypto.js` and `auth.js`.
