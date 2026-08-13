@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { execFileSync } = require('child_process');
-const { decryptBuffer, peekKeyKind, KEY_KIND, decryptWithPerFileKey, wipe } = require('./crypto');
+const { decryptBuffer, peekKeyKind, KEY_KIND, decryptWithPerFileKey, wipe, deriveAuthSubkey } = require('./crypto');
 const { loadMasterKey, loadDeviceKey } = require('./auth');
 const { getDriveLetter, getSevenZipPath } = require('./platform');
 const logger = require('./logger');
@@ -96,7 +96,9 @@ async function main() {
 
             const expectedMac = loadHmac(encFile);
             if (expectedMac) {
-                const ok = verifyHmac(encFile, rawKey, expectedMac);
+                const authSubkey = deriveAuthSubkey(rawKey);
+                const ok = verifyHmac(encFile, authSubkey, expectedMac);
+                wipe(authSubkey);
                 if (!ok) {
                     console.error('Integrity check failed: this file has been modified or corrupted since it was encrypted.');
                     process.exit(1);
@@ -157,6 +159,7 @@ async function main() {
             console.log('\nExtracting folder...');
             const tempArchive = path.join(destDir, base + '.tmp.7z');
             fs.writeFileSync(tempArchive, plainBuffer);
+            wipe(plainBuffer);
             // execFileSync with an argument array - no shell string
             // interpolation, so no command-injection risk from the path.
             execFileSync(SEVEN_ZIP, ['x', tempArchive, '-o' + destDir, '-aou'], { stdio: 'inherit' });
@@ -165,6 +168,7 @@ async function main() {
         } else {
             const outPath = path.join(destDir, base);
             fs.writeFileSync(outPath, plainBuffer);
+            wipe(plainBuffer);
             console.log(`File restored: ${outPath}`);
         }
 
