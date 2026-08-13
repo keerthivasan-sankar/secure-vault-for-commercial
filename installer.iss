@@ -1,72 +1,257 @@
-; Secure Vault - Inno Setup installer script
-; Build with: iscc installer.iss   (Inno Setup 6.x, https://jrsoftware.org/isinfo.php)
-; Produces: dist/SecureVaultSetup-<version>.exe
+# Secure Vault
 
-#define MyAppName "Secure Vault"
-#define MyAppVersion "3.4.0"
-#define MyAppPublisher "Your Name"
-#define MyAppURL "https://github.com/yourname/secure-vault"
-#define MyAppExeName "secure-vault.bat"
+<p align="center">
+  <img src="assets/logo.png" alt="Secure Vault logo" width="280">
+</p>
 
-[Setup]
-AppId={{8F3C1B2A-6D4E-4A9C-9F1D-2C7E5A0B9E11}}
-AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-AppPublisher={#MyAppPublisher}
-AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}
-AppUpdatesURL={#MyAppURL}
-DefaultDirName={autopf}\SecureVault
-DefaultGroupName=Secure Vault
-DisableProgramGroupPage=yes
-OutputDir=dist
-OutputBaseFilename=SecureVaultSetup-{#MyAppVersion}
-Compression=lzma2
-SolidCompression=yes
-WizardStyle=modern
-; Requires admin rights so Node.js / 7-Zip can be installed if missing,
-; and so shortcuts/right-click registration work for all users.
-PrivilegesRequired=admin
-ArchitecturesInstallIn64BitMode=x64compatible
-UninstallDisplayIcon={app}\icon.ico
-SetupIconFile=icon.ico
-; LicenseFile=LICENSE.txt   ; uncomment once you add a LICENSE.txt
+<p align="center">
+  <b>Local-first file encryption for Windows, secured by a physical USB key instead of a password.</b>
+</p>
 
-[Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
+<p align="center">
+  ⚠️ <b>v3.5.0 includes a breaking security fix</b> — see <a href="CHANGELOG.md">CHANGELOG.md</a> before updating from an earlier version.
+</p>
 
-[Tasks]
-Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"
-Name: "rightclick"; Description: "Add ""Encrypt/Decrypt with Secure Vault"" to the right-click menu"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
+---
 
-[Files]
-Source: "package.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "secure-vault.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "SecureVault.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "secure-vault-launcher.js"; DestDir: "{app}"; Flags: ignoreversion
-Source: "README.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "src\*"; DestDir: "{app}\src"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "config\*"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs onlyifdoesntexist
-; icon.ico must exist alongside this script before building - see PUBLISH_CHECKLIST.md
-Source: "icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+## Table of Contents
 
-[Icons]
-Name: "{group}\Secure Vault"; Filename: "cmd.exe"; Parameters: "/c ""cd /d ""{app}"" && secure-vault.bat"""; IconFilename: "{app}\icon.ico"
-Name: "{group}\Uninstall Secure Vault"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\Secure Vault"; Filename: "cmd.exe"; Parameters: "/c ""cd /d ""{app}"" && secure-vault.bat"""; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
+- [What this is](#what-this-is)
+- [Why a USB key instead of a password](#why-a-usb-key-instead-of-a-password)
+- [Features](#features)
+- [Installation](#installation)
+- [First-time setup](#first-time-setup)
+- [Using Secure Vault](#using-secure-vault)
+  - [Encrypting a file](#1-encrypt-a-file)
+  - [Decrypting a file](#2-decrypt-a-file)
+  - [Registering a USB key](#3-register-usb-key)
+  - [Viewing registered devices](#4-view-registered-devices)
+  - [Backups](#5-backups)
+  - [Restoring a file](#6-restore)
+  - [Email alerts (Option 7)](#7-email-alerts)
+  - [Right-click integration](#8-right-click-integration)
+- [Command-line usage](#command-line-usage)
+- [Configuration files](#configuration-files)
+- [Building the installer from source](#building-the-installer-from-source)
+- [Security notes](#security-notes)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-[Run]
-; Check for Node.js and install silently if missing (same logic as the old Install.bat)
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (-not (Get-Command node -ErrorAction SilentlyContinue)) {{ Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.11.0/node-v20.11.0-x64.msi' -OutFile \""$env:TEMP\node-installer.msi\""; Start-Process msiexec -ArgumentList '/i', \""$env:TEMP\node-installer.msi\"", '/quiet' -Wait; Remove-Item \""$env:TEMP\node-installer.msi\"" }}"""; StatusMsg: "Checking for Node.js..."; Flags: runhidden waituntilterminated
+---
 
-; Install npm dependencies
-Filename: "{cmd}"; Parameters: "/c cd /d ""{app}"" && npm install --silent --no-fund --no-audit"; StatusMsg: "Installing dependencies..."; Flags: runhidden waituntilterminated
+## What this is
 
-; Optional right-click integration
-Filename: "node.exe"; Parameters: """{app}\src\install-rightclick.js"""; WorkingDir: "{app}"; StatusMsg: "Registering right-click menu..."; Tasks: rightclick; Flags: runhidden waituntilterminated
+Secure Vault encrypts individual files (or folders) on your Windows machine using AES-256-GCM. Instead of protecting the encryption key with just a password, the key is generated randomly and stored on a **USB flash drive** you choose. To decrypt anything later, that same USB drive has to be physically plugged in.
 
-; Launch after install
-Filename: "cmd.exe"; Parameters: "/c ""cd /d ""{app}"" && secure-vault.bat"""; Description: "Launch Secure Vault"; Flags: postinstall nowait skipifsilent
+## Why a USB key instead of a password
 
-[UninstallDelete]
-Type: filesandordirs; Name: "{app}\node_modules"
+Passwords can be guessed, phished, keylogged, or brute-forced. A physical key can't be remotely stolen the way a password can. Trade-offs to understand before you rely on this:
+
+- If someone steals your laptop but **not** your USB drive, they cannot decrypt your files.
+- There is nothing to type, remember, or leak.
+- **There is no password reset.** If you lose the USB drive and don't have a backup of the key file on it, anything encrypted with it is permanently unrecoverable. Treat that drive like a physical house key — know where it is at all times, and consider keeping a backup copy of the key file itself in a safe second location.
+
+## Features
+
+- AES-256-GCM encryption with scrypt key derivation
+- USB-based master key, plus optional per-device keys for multiple machines
+- Encrypted local backups with automatic rotation (keeps the last 5, expires after 30 days)
+- File integrity checksums (detects tampering/corruption)
+- Multi-pass secure delete of the original file after encryption
+- Optional email alerts when vault actions happen
+- Optional right-click "Encrypt/Decrypt with Secure Vault" entry in Windows Explorer
+- Fully unattended installer — no interaction required beyond the initial double-click
+
+---
+
+## Installation
+
+1. Go to the [Releases page](../../releases) and download the latest `SecureVaultSetup-x.x.x.exe`.
+2. Run it.
+   - **Windows may show a "Windows protected your PC" SmartScreen warning.** This is expected for a new, unsigned installer — click **"More info" → "Run anyway"**. See [Security notes](#security-notes) for why this happens.
+   - The installer requires administrator rights (it may install Node.js if it's missing, and can register a right-click shell extension).
+3. During setup you'll be asked whether to create a desktop shortcut and whether to add the right-click menu integration — both optional, check the boxes you want.
+4. The installer will:
+   - Check for Node.js and install it silently if missing
+   - Install the app to `Program Files\SecureVault` (or your chosen location)
+   - Install the one required dependency (`nodemailer`, used only for the optional email feature)
+   - Create Start Menu / Desktop shortcuts
+5. Click **Finish** — Secure Vault launches automatically.
+
+No manual steps, no command line required for a normal install.
+
+---
+
+## First-time setup
+
+The very first thing to do after installing is **register a USB drive as your master key**. Nothing can be encrypted or decrypted until this is done.
+
+1. Plug in a USB flash drive you're comfortable dedicating to this purpose.
+2. Launch Secure Vault (Start Menu or Desktop shortcut).
+3. From the menu, choose **Option 3 — Register USB**.
+4. Type: `master`
+5. Enter the drive letter, e.g. `E:` (see [Troubleshooting](#troubleshooting) if this fails).
+6. Secure Vault writes a `.vault_master.key` file to the root of that drive. **Do not delete this file, and do not lose this drive.**
+
+Optional but recommended: copy that `.vault_master.key` file to a second, safely-stored USB drive as a backup, in case the primary one is ever lost or damaged.
+
+---
+
+## Using Secure Vault
+
+Launch the app via the Start Menu / Desktop shortcut to get the interactive menu:
+
+```
+========================================
+  SECURE VAULT
+========================================
+  1. Encrypt a file
+  2. Decrypt a file
+  3. Register USB
+  4. View devices
+  5. View backups
+  6. Restore file
+  7. Configure email
+  8. Install right-click menu
+  9. Exit
+```
+
+### 1. Encrypt a file
+Choose option 1, then enter the full path to the file or folder. Your registered USB drive must be plugged in. The output is a `.vault` file; the original is securely deleted (overwritten 3 times) after a successful encryption and backup.
+
+### 2. Decrypt a file
+Choose option 2, enter the path to the `.vault` file. Your registered USB drive must be plugged in — decryption is impossible without it.
+
+### 3. Register USB key
+Covered in [First-time setup](#first-time-setup) above. You can also register **additional per-device keys** (choose `device` instead of `master`) if you want a separate key for a second machine while keeping one master key overall.
+
+### 4. View registered devices
+Lists every USB key (master and device) currently registered, pulled from `config/registered-devices.json`.
+
+### 5. Backups
+Every time you encrypt a file, Secure Vault automatically saves an encrypted backup copy locally (rotated — keeps the 5 most recent, auto-expires after 30 days). Option 5 lets you list and view these.
+
+### 6. Restore
+Restores a file from one of those local backups, in case you need the pre-encryption version back without going through decrypt.
+
+### 7. Email alerts
+Optional. Sends you an email whenever a vault action happens (encrypt/decrypt), including which file, which computer, and when.
+
+**Setup requires a Gmail App Password — not your normal Gmail password.** Steps:
+
+1. Make sure **2-Step Verification is enabled** on the Gmail account you want to send from — go to [myaccount.google.com/security](https://myaccount.google.com/security) and turn it on if it isn't already. App Passwords are unavailable without this.
+2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), sign in, and generate a new App Password (name it anything, e.g. "Secure Vault"). Copy the 16-character code shown — it's only displayed once.
+3. In Secure Vault, choose **Option 7**.
+4. Answer the prompts:
+   - `Enable email alerts? (y/n)` → `y`
+   - `Your Gmail address` → the account you generated the App Password for
+   - `Gmail App Password` → paste the 16-character code (not your real Gmail password)
+   - `Alert recipient email` → where you want alerts sent (can be the same address)
+
+Notes:
+- This feature is Gmail-only as currently built (hardcoded to `smtp.gmail.com`).
+- The App Password is stored in plaintext in `config/settings.json` on your machine — don't share that file, and don't commit it with real credentials to a public repository.
+- If sending fails (bad password, no internet), it logs an error and continues — it will never block or break an encrypt/decrypt operation.
+- Fully optional — answering `n` skips it, and everything else works identically.
+
+### 8. Right-click integration
+Adds "Encrypt with Secure Vault" / "Decrypt with Secure Vault" to the Windows Explorer right-click menu, so you can encrypt/decrypt without opening the app menu first.
+
+---
+
+## Command-line usage
+
+Everything is also available without the interactive menu:
+
+```
+node secure-vault-launcher.js encrypt "C:\path\to\file"
+node secure-vault-launcher.js decrypt "C:\path\to\file.vault"
+node secure-vault-launcher.js register master E:
+node secure-vault-launcher.js register device F:
+node secure-vault-launcher.js devices
+node secure-vault-launcher.js backup list
+node secure-vault-launcher.js backup view <name>
+node secure-vault-launcher.js backup view-latest
+node secure-vault-launcher.js restore list
+node secure-vault-launcher.js restore restore "C:\path\to\file"
+node secure-vault-launcher.js email
+node secure-vault-launcher.js rightclick
+node secure-vault-launcher.js help
+```
+
+Run this from the install folder (e.g. `C:\Program Files\SecureVault`).
+
+---
+
+## Configuration files
+
+| File | Purpose |
+|---|---|
+| `config/settings.json` | Email alert settings (address, App Password, enabled flag) |
+| `config/registered-devices.json` | List of registered USB devices |
+
+These are created with safe placeholder values on install and update automatically as you use the app — no manual editing required.
+
+---
+
+## Building the installer from source
+
+Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php) if building locally on Windows:
+
+```
+iscc installer.iss
+```
+
+Output: `dist/SecureVaultSetup-<version>.exe`
+
+**Or let GitHub Actions build it for you** (no Windows machine needed) — push a version tag:
+
+```
+git tag v3.5.0
+git push origin v3.2.0
+```
+
+The workflow in `.github/workflows/build.yml` builds the installer on a Windows runner and automatically attaches it to a GitHub Release.
+
+---
+
+## Security notes
+
+- **The USB key is never stored in plaintext.** As of v3.3.0, the 32-byte key on your USB drive is itself encrypted (AES-256-GCM) with a key derived from your password via scrypt. Someone with brief physical access to the USB drive alone cannot extract a usable key without also knowing the password — this replaces the earlier design, which stored the raw key in plaintext on the drive.
+- **This is removable-key possession, not hardware-bound custody.** The key file on the USB drive is an ordinary, copyable file — not a secret stored inside tamper-resistant hardware like a smart card, TPM, or a device such as a YubiKey, which never lets raw key material leave the device at all. Someone with brief physical access to your drive (or malware running on your machine while it's mounted) can copy that file; it just isn't useful to them without your password too. If you need true hardware-bound custody, a dedicated hardware security token is a stronger choice than a commodity USB drive.
+- Uses Node's built-in `crypto` module: AES-256-GCM with scrypt key derivation, random salts and IVs per operation, and authentication tags to detect tampering.
+- File integrity is checked with a **keyed HMAC-SHA256** (using the same unlocked key), verified before decryption is attempted. Earlier versions used an unkeyed SHA-256 checksum, which anyone could forge — it added no real tamper protection. The current HMAC does.
+- 7-Zip is invoked via `execFileSync` with arguments passed as an array, not a shell string — this closes a command-injection risk present in earlier versions, where a maliciously crafted file/folder name could have broken out of shell quoting.
+- Passwords are captured into a `Buffer` (not a JS string) and explicitly zeroed (`.fill(0)`) as soon as each use is finished, reducing the time key material spends resident in memory. This is a real improvement but not an absolute guarantee — Node.js/V8 may retain other copies internally (e.g. during garbage collection, or if memory was paged to disk by the OS) that application code cannot reach or control.
+- **This project has not undergone an independent third-party security audit.** It's built on standard, well-reviewed cryptographic primitives, and several issues raised by community review have been fixed (see [CHANGELOG.md](CHANGELOG.md)), but the implementation has only been reviewed informally overall. Use it for what you'd be comfortable losing, not as your only line of defense for anything irreplaceable.
+- Secure delete overwrites the original file 3 times before removing it — note that on SSDs, wear-leveling means overwrite-based deletion doesn't guarantee the original data is unrecoverable at the hardware level.
+- The installer is currently unsigned, which is why Windows shows a SmartScreen warning on first run. Unsigned doesn't mean unsafe — it means Windows hasn't yet built reputation for this specific publisher/file. You can verify the source code yourself in this repository before trusting the compiled `.exe`.
+- **There is no password recovery, by design.** Your password is never stored anywhere. If you forget it, files encrypted with it are permanently unrecoverable, even with the correct USB drive in hand.
+
+---
+
+## Troubleshooting
+
+**"Enter drive" — what format should I use?**
+Any of `E`, `e`, `E:`, or `E:\` work — Secure Vault normalizes it automatically and verifies the drive exists before writing anything.
+
+**`ENOENT` error mentioning a folder like `e\.vault_master.key` inside your install directory**
+This was a bug in older versions where a drive letter typed without a colon (e.g. just `e`) was misread as a relative folder name instead of a real drive. Fixed as of this version — update to the latest release if you still see this.
+
+**Email alerts aren't sending**
+- Confirm 2-Step Verification is on for the Gmail account.
+- Confirm you used an **App Password**, not your regular Gmail password.
+- Check your internet connection.
+- The error message printed to the console will usually state the specific cause.
+
+**SmartScreen blocks the installer**
+Click "More info," then "Run anyway." This is expected for an unsigned installer — see [Security notes](#security-notes).
+
+**Node.js / 7-Zip install seems to hang**
+Check for a Windows UAC ("Do you want to allow this app to make changes?") prompt, possibly hidden behind other windows — the silent installers still require this one confirmation click.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
