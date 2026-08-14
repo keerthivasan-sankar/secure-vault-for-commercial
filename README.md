@@ -1,6 +1,7 @@
 # Secure Vault
 
 ![Secure Vault logo](https://github.com/keerthivasan-sankar/secure-vault-for-commercial/raw/main/assets/logo.png)
+📄 **Technical paper:** [SecureVault_Technical_Paper_v3.5.0.pdf](SecureVault_Technical_Paper_v3.5.0.pdf) · [Cite on Zenodo](https://doi.org/10.5281/zenodo.21861791)
 
 **Local-first file encryption for Windows, secured by a physical USB key instead of a password.**
 
