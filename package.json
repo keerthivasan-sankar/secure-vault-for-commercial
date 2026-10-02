@@ -4,6 +4,6 @@
   "description": "AES-256-GCM file encryption with USB key authentication",
   "main": "src/encrypt.js",
   "dependencies": {
-    "nodemailer": "9.1.1"
+    "nodemailer": "10.0.9"
   }
 }
